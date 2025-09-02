@@ -3,8 +3,11 @@ spring:
     driver-class-name: org.postgresql.Driver
     username: sai
     password: sai
-    url: jdbc:postgresql://localhost:5432/ocean?currentSchema=ocean
+    url: jdbc:postgresql://localhost:5432/ocean?currentSchema=leave
 
+  flyway:
+    enabled: true
+    default-schema: leave
 
   jpa:
     show-sql: true
