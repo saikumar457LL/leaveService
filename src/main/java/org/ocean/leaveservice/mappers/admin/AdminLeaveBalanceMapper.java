@@ -1,5 +1,6 @@
 package org.ocean.leaveservice.mappers.admin;
 
+import lombok.extern.slf4j.Slf4j;
 import org.mapstruct.*;
 import org.ocean.leaveservice.dao.admin.AdminLeaveBalanceDto;
 import org.ocean.leaveservice.entity.LeaveBalances;

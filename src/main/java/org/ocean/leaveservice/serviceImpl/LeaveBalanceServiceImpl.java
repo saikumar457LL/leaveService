@@ -37,6 +37,6 @@ public class LeaveBalanceServiceImpl implements UserLeaveBalanceService , AdminL
     @Override
     public List<AdminLeaveBalanceDto> getAllUserLeaveBalances() {
         return leaveBalancesRepository.findAll().stream()
-                .map(adminLeaveBalanceMapper::toDto).toList();
+                .map(leaveBalance -> adminLeaveBalanceMapper.toDto(leaveBalance,userUtils)).toList();
     }
 }
