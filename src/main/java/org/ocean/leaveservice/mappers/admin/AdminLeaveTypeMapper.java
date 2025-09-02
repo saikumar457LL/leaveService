@@ -1,21 +1,20 @@
-package org.ocean.leaveservice.mappers;
+package org.ocean.leaveservice.mappers.admin;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.NullValuePropertyMappingStrategy;
-import org.ocean.leaveservice.dao.UserLeaveTypeDto;
+import org.ocean.leaveservice.dao.admin.AdminLeaveTypeDto;
 import org.ocean.leaveservice.entity.LeaveType;
+import org.ocean.leaveservice.mappers.GenericMapper;
 
 @Mapper(componentModel = "spring",nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-public interface LeaveTypeMapper extends GenericMapper<LeaveType, UserLeaveTypeDto> {
-
+public interface AdminLeaveTypeMapper extends GenericMapper<LeaveType, AdminLeaveTypeDto> {
     @Mapping(source = "code",target = "name")
     @Override
-    UserLeaveTypeDto toDto(LeaveType entity);
+    AdminLeaveTypeDto toDto(LeaveType entity);
 
     @Mapping(source = "name",target = "code")
     @Mapping(target = "id",ignore = true)
-    @Mapping(target = "description",ignore = true)
     @Override
-    LeaveType toEntity(UserLeaveTypeDto dto);
+    LeaveType toEntity(AdminLeaveTypeDto dto);
 }

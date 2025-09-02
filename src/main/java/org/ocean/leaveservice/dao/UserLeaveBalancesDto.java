@@ -5,10 +5,9 @@ import lombok.Data;
 
 @Data
 @Builder
-public class LeaveBalancesDto {
+public class UserLeaveBalancesDto {
 
-    private LeaveTypeDto leaveType;
-    private Integer user;
+    private UserLeaveTypeDto leaveType;
     private int availableLeaves;
     private int usedLeaves;
 }
