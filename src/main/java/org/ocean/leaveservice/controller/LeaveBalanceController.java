@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.ocean.leaveservice.dto.UserLeaveRequestDto;
 import org.ocean.leaveservice.responses.AdminLeaveBalanceResponseDto;
 import org.ocean.leaveservice.responses.ApiResponse;
+import org.ocean.leaveservice.responses.UserLeaveApplyResponseDto;
 import org.ocean.leaveservice.responses.UserLeaveBalancesResponseDto;
 import org.ocean.leaveservice.service.AdminLeaveBalanceService;
 import org.ocean.leaveservice.service.UserLeaveBalanceService;
@@ -26,10 +27,20 @@ public class LeaveBalanceController {
 
 
     @PostMapping("/apply")
-    public ResponseEntity<ApiResponse<Void>> applyLeave(@RequestBody @Validated UserLeaveRequestDto leaveRequest) {
+    public ResponseEntity<ApiResponse<UserLeaveApplyResponseDto>> applyLeave(@RequestBody @Validated UserLeaveRequestDto leaveRequest) {
 
-        userLeaveBalanceService.applyLeave(leaveRequest);
-        return null;
+        UserLeaveApplyResponseDto userLeaveApplyResponse = userLeaveBalanceService.applyLeave(leaveRequest);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(
+                  ApiResponse.<UserLeaveApplyResponseDto>builder()
+                          .success(true)
+                          .data(userLeaveApplyResponse)
+                          .message("Leave applied successfully")
+                          .statusCode(HttpStatus.OK.value())
+                          .timestamp(LocalDateTime.now())
+                          .build()
+                );
     }
 
     @GetMapping

@@ -7,6 +7,7 @@ import org.ocean.leaveservice.constants.LeaveStatus;
 import org.ocean.leaveservice.entity.LeaveRequest;
 import org.ocean.leaveservice.entity.LeaveType;
 import org.ocean.leaveservice.repository.LeaveTypeRepository;
+import org.ocean.leaveservice.responses.UserLeaveApplyResponseDto;
 import org.ocean.leaveservice.responses.UserLeaveBalancesResponseDto;
 import org.ocean.leaveservice.dto.UserLeaveRequestDto;
 import org.ocean.leaveservice.responses.AdminLeaveBalanceResponseDto;
@@ -19,10 +20,12 @@ import org.ocean.leaveservice.repository.LeaveBalancesRepository;
 import org.ocean.leaveservice.repository.LeaveRequestRepository;
 import org.ocean.leaveservice.service.AdminLeaveBalanceService;
 import org.ocean.leaveservice.service.UserLeaveBalanceService;
+import org.ocean.leaveservice.utils.DateTimeUtils;
 import org.ocean.leaveservice.utils.UserUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,25 +56,44 @@ public class LeaveBalanceServiceImpl implements UserLeaveBalanceService , AdminL
                 .map(leaveBalance -> adminLeaveBalanceMapper.toDto(leaveBalance,userUtils)).toList();
     }
 
+    // TODO Implement half-day leave
     @Transactional
     @Override
-    public UserLeaveRequestDto applyLeave(UserLeaveRequestDto leaveRequest) {
+    public UserLeaveApplyResponseDto applyLeave(UserLeaveRequestDto leaveRequest) {
 
-        Map<String, Integer> availableLeaves = leaveBalancesRepository.findAllByUser(UUID.fromString(userUtils.getUserId()))
+        if (DateTimeUtils.isBeforeToday(leaveRequest.getFromDate()) || DateTimeUtils.isBeforeToday(leaveRequest.getToDate())) {
+            throw new LeaveException("Invalid Date",
+                    "From-Date and To-Date must be today or in the future, not past dates");
+        }
+
+        if (leaveRequest.getFromDate().isAfter(leaveRequest.getToDate())) {
+            throw new LeaveException("Invalid Date Range", "From-Date cannot be after To-Date");
+        }
+
+
+        UUID userId = UUID.fromString(userUtils.getUserId());
+
+        Map<String, Integer> availableLeaves = leaveBalancesRepository.findAllByUser(userId)
                 .stream()
                 .collect(Collectors.toMap(leaveBalances -> leaveBalances.getLeaveType().getCode(), LeaveBalances::getAvailableLeaves));
 
         availableLeaves.computeIfAbsent(leaveRequest.getLeaveType(), ex -> {
-            throw new LeaveException(leaveRequest.getLeaveType(),"is not valid leaveType");
+            throw new LeaveException(leaveRequest.getLeaveType(),"is not a valid leave type");
         });
 
         Duration numberOfLeaveHours = Duration.between(leaveRequest.getFromDate(), leaveRequest.getToDate());
-        long numberOfLeaveDays = Duration.from(numberOfLeaveHours).toDays();
+        long numberOfLeaveDays = ChronoUnit.DAYS.between(leaveRequest.getFromDate().toLocalDate(), leaveRequest.getToDate().toLocalDate())+1;
+
+        log.info("Leave Hours: {}",numberOfLeaveHours);
+        log.info("Leave Days: {}",numberOfLeaveDays);
 
         Integer availablePerLeaveType = availableLeaves.get(leaveRequest.getLeaveType());
 
         if(numberOfLeaveDays > availablePerLeaveType) {
-            throw new LeaveException("Leave " + leaveRequest.getLeaveType() + " available quota exceed","Currently you have " + availablePerLeaveType + " leaves for this leave type");
+            throw new LeaveException(
+                    "Leave quota exceeded",
+                    "You requested " + numberOfLeaveDays + " days, but only " + availablePerLeaveType + " are available."
+            );
         }
 
         LeaveType leaveType = leaveTypeRepository.findByCode(leaveRequest.getLeaveType()).orElseThrow(() -> new LeaveException("Not found", leaveRequest.getLeaveType() + " is not found"));
@@ -80,14 +102,25 @@ public class LeaveBalanceServiceImpl implements UserLeaveBalanceService , AdminL
         markedForLeave.setLeaveType(leaveType);
         markedForLeave.setFromDate(leaveRequest.getFromDate());
         markedForLeave.setToDate(leaveRequest.getToDate());
-        markedForLeave.setUser(UUID.fromString(userUtils.getUserId()));
+        markedForLeave.setUser(userId);
         markedForLeave.setStatus(LeaveStatus.PENDING);
-        leaveRequestRepository.save(markedForLeave);
 
-        LeaveBalances byUserAndLeaveTypeCode = leaveBalancesRepository.findByUserAndLeaveType_Code(UUID.fromString(userUtils.getUserId()), leaveRequest.getLeaveType());
-        byUserAndLeaveTypeCode.setAvailableLeaves(byUserAndLeaveTypeCode.getAvailableLeaves() - (int)numberOfLeaveDays);
-        byUserAndLeaveTypeCode.setUsedLeaves(byUserAndLeaveTypeCode.getUsedLeaves() + (int)numberOfLeaveDays);
+        LeaveRequest savedLeave = leaveRequestRepository.save(markedForLeave);
+
+        LeaveBalances byUserAndLeaveTypeCode = leaveBalancesRepository.findByUserAndLeaveType_Code(userId, leaveRequest.getLeaveType());
+        byUserAndLeaveTypeCode.setAvailableLeaves(minus(byUserAndLeaveTypeCode.getAvailableLeaves(), (int)numberOfLeaveDays));
+        byUserAndLeaveTypeCode.setUsedLeaves(plus(byUserAndLeaveTypeCode.getUsedLeaves(), (int)numberOfLeaveDays));
+
         leaveBalancesRepository.save(byUserAndLeaveTypeCode);
-        return null;
+
+        return userLeaveResponseMapper.toDto(savedLeave);
+    }
+
+    private int plus(int a, int b) {
+        return a + b;
+    }
+
+    private int minus(int a, int b) {
+        return a - b;
     }
 }

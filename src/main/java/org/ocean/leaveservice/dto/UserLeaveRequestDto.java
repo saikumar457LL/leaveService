@@ -13,12 +13,8 @@ import java.time.LocalDateTime;
 public class UserLeaveRequestDto {
     @NotBlank
     private String leaveType;
-
     @NotNull
-    @Future
     private LocalDateTime fromDate;
-
     @NotNull
-    @Future
     private LocalDateTime toDate;
 }
