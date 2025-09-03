@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.<Void>builder()
                                 .success(false)
-                                .message("Error occurred")
+                                .message(ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .error(error)
                                 .statusCode(HttpStatus.BAD_REQUEST.value())
