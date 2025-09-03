@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
         log.error("Business exception at: {} {}",request.getRequestURI(),ex.getMessage());
 
         ErrorResponse error = ErrorResponse.builder()
-                .error(ex.getError())
+                .error(ex.getError() + " " + ex.getMessage())
                 .path(request.getRequestURI())
                 .build();
 
@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
                 .body(
                         ApiResponse.<Void>builder()
                                 .success(false)
-                                .message(ex.getMessage())
+                                .message(ex.getError() + " " + ex.getMessage())
                                 .timestamp(LocalDateTime.now())
                                 .error(error)
                                 .statusCode(HttpStatus.BAD_REQUEST.value())
