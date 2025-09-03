@@ -26,4 +26,7 @@ public class LeaveBalances {
 
     @Column(name = "used_leaves",nullable = false)
     private int usedLeaves = 0;
+
+    @Version
+    private Integer version;
 }
