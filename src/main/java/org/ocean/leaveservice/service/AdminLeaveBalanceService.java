@@ -1,10 +1,10 @@
 package org.ocean.leaveservice.service;
 
-import org.ocean.leaveservice.dao.admin.AdminLeaveBalanceDto;
+import org.ocean.leaveservice.responses.AdminLeaveBalanceResponseDto;
 
 import java.util.List;
 
 public interface AdminLeaveBalanceService {
 
-    List<AdminLeaveBalanceDto> getAllUserLeaveBalances();
+    List<AdminLeaveBalanceResponseDto> getAllUserLeaveBalances();
 }

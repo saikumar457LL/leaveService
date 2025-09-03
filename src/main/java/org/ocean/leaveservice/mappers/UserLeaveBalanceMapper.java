@@ -2,18 +2,25 @@ package org.ocean.leaveservice.mappers;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
-import org.ocean.leaveservice.dao.UserLeaveBalancesDto;
+import org.ocean.leaveservice.entity.LeaveType;
+import org.ocean.leaveservice.responses.UserLeaveBalancesResponseDto;
 import org.ocean.leaveservice.entity.LeaveBalances;
 
-@Mapper(componentModel = "spring",nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,uses = LeaveTypeMapper.class)
-public interface UserLeaveBalanceMapper extends  GenericMapper<LeaveBalances, UserLeaveBalancesDto> {
+@Mapper(componentModel = "spring",nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+public interface UserLeaveBalanceMapper extends  GenericMapper<LeaveBalances, UserLeaveBalancesResponseDto> {
 
+    @Mapping(source = "leaveType",target = "leaveType",qualifiedByName = "format_leave_type")
     @Override
-    UserLeaveBalancesDto toDto(LeaveBalances entity);
+    UserLeaveBalancesResponseDto toDto(LeaveBalances entity);
 
-    @Mapping(target = "id",ignore = true)
-    @Mapping(target = "user",ignore = true)
+    @Mapping(target = "leaveType",ignore = true)
     @Override
-    LeaveBalances toEntity(UserLeaveBalancesDto dto);
+    LeaveBalances toEntity(UserLeaveBalancesResponseDto dto);
+
+    @Named("format_leave_type")
+    default String formatLeaveType(LeaveType leaveType) {
+        return leaveType.getCode();
+    }
 }

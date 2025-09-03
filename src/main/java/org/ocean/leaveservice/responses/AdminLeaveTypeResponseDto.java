@@ -1,11 +1,11 @@
-package org.ocean.leaveservice.dao.admin;
+package org.ocean.leaveservice.responses;
 
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Builder
-public class AdminLeaveTypeDto {
+public class AdminLeaveTypeResponseDto {
     private String name;
     private String description;
 }

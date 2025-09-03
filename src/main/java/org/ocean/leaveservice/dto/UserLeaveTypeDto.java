@@ -1,4 +1,4 @@
-package org.ocean.leaveservice.dao;
+package org.ocean.leaveservice.dto;
 
 import lombok.Builder;
 import lombok.Data;
