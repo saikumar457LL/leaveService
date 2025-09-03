@@ -21,7 +21,7 @@ reason for leave
 @Table(name = "leave_requests")
 public class LeaveRequest {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(name = "user_id",nullable = false)

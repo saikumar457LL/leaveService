@@ -28,11 +28,15 @@ create table leave.leave_requests(
                                leave_type_id int not null references leave.leave_type(id) ,
                                from_date timestamp not null ,
                                to_date timestamp not null check ( to_date>=from_date ) ,
-                               leave_status leave.leave_states not null default 'PENDING' ,
+                               leave_status varchar(20) not null default 'PENDING' ,
                                approver_id uuid references authentication.users(uuid) ,
                                created_at timestamp not null default current_timestamp ,
                                updated_at timestamp not null default current_timestamp
 );
+
+ALTER TABLE leave.leave_requests
+    ADD CONSTRAINT chk_leave_status
+        CHECK (leave_status IN ('APPROVED', 'PENDING', 'REJECTED', 'CANCELED'));
 
 
 -- =========================================
