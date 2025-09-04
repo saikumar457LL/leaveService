@@ -2,15 +2,12 @@ package org.ocean.leaveservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.ocean.leaveservice.dto.UserLeaveRequestDto;
-import org.ocean.leaveservice.responses.AdminLeaveBalanceResponseDto;
 import org.ocean.leaveservice.responses.ApiResponse;
 import org.ocean.leaveservice.responses.UserLeaveApplyResponseDto;
 import org.ocean.leaveservice.responses.UserLeaveBalancesResponseDto;
-import org.ocean.leaveservice.service.AdminLeaveBalanceService;
 import org.ocean.leaveservice.service.UserLeaveBalanceService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,8 +20,6 @@ import java.util.List;
 public class LeaveBalanceController {
 
     private final UserLeaveBalanceService userLeaveBalanceService;
-    private final AdminLeaveBalanceService adminLeaveBalanceService;
-
 
     @PostMapping("/apply")
     public ResponseEntity<ApiResponse<UserLeaveApplyResponseDto>> applyLeave(@RequestBody @Validated UserLeaveRequestDto leaveRequest) {
@@ -53,21 +48,6 @@ public class LeaveBalanceController {
                                 .statusCode(HttpStatus.OK.value())
                                 .timestamp(LocalDateTime.now())
                                 .data(userLeaveBalanceService.getMyLeaveBalances())
-                                .build()
-                );
-    }
-
-    @GetMapping("/admin")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<AdminLeaveBalanceResponseDto>>> fetchAllUserLeaves() {
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(
-                        ApiResponse.<List<AdminLeaveBalanceResponseDto>>builder()
-                                .success(true)
-                                .message("success")
-                                .statusCode(HttpStatus.OK.value())
-                                .timestamp(LocalDateTime.now())
-                                .data(adminLeaveBalanceService.getAllUserLeaveBalances())
                                 .build()
                 );
     }

@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface AdminLeaveBalanceService {
 
-    List<AdminLeaveBalanceResponseDto> getAllUserLeaveBalances();
+    List<AdminLeaveBalanceResponseDto> fetchUserLeaves(String uuid);
 }
