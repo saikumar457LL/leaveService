@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.ocean.leaveservice.constants.LeaveStatus;
 import org.ocean.leaveservice.dto.UserLeaveRequestDto;
+import org.ocean.leaveservice.dto.admin.AdminLeaveAdjustRequestDto;
 import org.ocean.leaveservice.entity.LeaveBalances;
 import org.ocean.leaveservice.entity.LeaveRequest;
 import org.ocean.leaveservice.entity.LeaveType;
@@ -46,12 +47,25 @@ public class LeaveBalanceServiceImpl implements UserLeaveBalanceService , AdminL
     private final AdminLeaveBalanceMapper adminLeaveBalanceMapper;
 
 
+    // ADMIN ACTIONS
+
     @Override
     public List<AdminLeaveBalanceResponseDto> fetchUserLeaves(String uuid) {
         UUID userUuid = UUID.fromString(uuid);
         List<LeaveBalances> userLeaves = leaveBalancesRepository.findAllByUser(userUuid);
         return userLeaves.stream().map(adminLeaveBalanceMapper::toDto).toList();
     }
+
+    @Override
+    public List<AdminLeaveBalanceResponseDto> adjustUserLeaves(AdminLeaveAdjustRequestDto leaveAdjustRequestDto) {
+        UUID userUuid = UUID.fromString(leaveAdjustRequestDto.getUserId());
+        LeaveBalances leaveBalancesToAdjust = leaveBalancesRepository.findByUserAndLeaveType_Code(userUuid, leaveAdjustRequestDto.getLeaveType());
+        leaveBalancesToAdjust.setAvailableLeaves(leaveAdjustRequestDto.getNumberOfLeaves());
+        leaveBalancesRepository.save(leaveBalancesToAdjust);
+        return leaveBalancesRepository.findAllByUser(userUuid).stream().map(adminLeaveBalanceMapper::toDto).toList();
+    }
+
+    // USER ACTIONS
 
     @Override
     public List<UserLeaveBalancesResponseDto> getMyLeaveBalances() {

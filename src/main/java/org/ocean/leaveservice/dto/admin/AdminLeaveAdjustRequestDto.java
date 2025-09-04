@@ -13,5 +13,5 @@ public class AdminLeaveAdjustRequestDto {
     @NotBlank
     private String leaveType;
     @Min(value = 0)
-    private Integer availableLeaves;
+    private Integer numberOfLeaves;
 }
