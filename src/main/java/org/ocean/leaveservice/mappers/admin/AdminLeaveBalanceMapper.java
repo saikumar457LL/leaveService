@@ -10,7 +10,6 @@ import org.ocean.leaveservice.responses.AdminLeaveBalanceResponseDto;
 @Mapper(componentModel = "spring",nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,uses = AdminLeaveTypeMapper.class)
 public interface AdminLeaveBalanceMapper extends GenericMapper<LeaveBalances, AdminLeaveBalanceResponseDto> {
 
-    @Mapping(target = "username",ignore = true)
     AdminLeaveBalanceResponseDto toDto(LeaveBalances entity);
 
     @Override
