@@ -44,6 +44,9 @@ public class LeaveRequest {
     @Column(name = "approver_id")
     private UUID approver;
 
+    @Column(name = "reason")
+    private String reason;
+
     @CreationTimestamp
     @Column(name = "created_at",nullable = false,updatable = false)
     private LocalDateTime createdAt;

@@ -17,7 +17,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/leave")
 @RequiredArgsConstructor
-public class LeaveBalanceController {
+public class LeaveController {
 
     private final UserLeaveBalanceService userLeaveBalanceService;
 

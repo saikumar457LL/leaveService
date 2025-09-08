@@ -122,6 +122,8 @@ public class LeaveBalanceServiceImpl implements UserLeaveBalanceService , AdminL
         markedForLeave.setToDate(leaveRequest.getToDate());
         markedForLeave.setUser(userId);
         markedForLeave.setStatus(LeaveStatus.PENDING);
+        markedForLeave.setReason(leaveRequest.getReason());
+        markedForLeave.setApprover(UUID.fromString(leaveRequest.getApprover()));
 
         LeaveRequest savedLeave = leaveRequestRepository.save(markedForLeave);
 

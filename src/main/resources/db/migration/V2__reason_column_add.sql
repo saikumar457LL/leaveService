@@ -1,0 +1,1 @@
+alter table leave.leave_requests add column reason varchar(500);

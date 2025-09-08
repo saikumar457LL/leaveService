@@ -18,7 +18,7 @@ import java.util.List;
 @RequestMapping("/leave/admin")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN','HR','SUPER')")
-public class LeaveBalanceAdminController {
+public class LeaveAdminController {
 
     private final AdminLeaveBalanceService adminLeaveBalanceService;
 

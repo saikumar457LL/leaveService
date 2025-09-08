@@ -1,6 +1,5 @@
 package org.ocean.leaveservice.dto;
 
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
@@ -17,4 +16,8 @@ public class UserLeaveRequestDto {
     private LocalDateTime fromDate;
     @NotNull
     private LocalDateTime toDate;
+    @NotNull
+    private String approver;
+    @NotNull
+    private String reason;
 }
