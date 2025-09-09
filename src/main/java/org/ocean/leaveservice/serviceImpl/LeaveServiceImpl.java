@@ -23,8 +23,8 @@ import org.ocean.leaveservice.responses.AdminLeaveBalanceResponseDto;
 import org.ocean.leaveservice.responses.ApiResponse;
 import org.ocean.leaveservice.responses.UserLeaveApplyResponseDto;
 import org.ocean.leaveservice.responses.UserLeaveBalancesResponseDto;
-import org.ocean.leaveservice.service.AdminLeaveBalanceService;
-import org.ocean.leaveservice.service.UserLeaveBalanceService;
+import org.ocean.leaveservice.service.AdminLeaveService;
+import org.ocean.leaveservice.service.UserLeaveService;
 import org.ocean.leaveservice.utils.DateTimeUtils;
 import org.ocean.leaveservice.utils.MailUtils;
 import org.ocean.leaveservice.utils.UserUtils;
@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @RequiredArgsConstructor
 @Transactional
-public class LeaveBalanceServiceImpl implements UserLeaveBalanceService , AdminLeaveBalanceService {
+public class LeaveServiceImpl implements UserLeaveService, AdminLeaveService {
 
     private final LeaveBalancesRepository leaveBalancesRepository;
     private final UserUtils userUtils;

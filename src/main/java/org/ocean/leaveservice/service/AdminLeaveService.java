@@ -5,7 +5,7 @@ import org.ocean.leaveservice.responses.AdminLeaveBalanceResponseDto;
 
 import java.util.List;
 
-public interface AdminLeaveBalanceService {
+public interface AdminLeaveService {
 
     List<AdminLeaveBalanceResponseDto> fetchUserLeaves(String uuid);
     List<AdminLeaveBalanceResponseDto> adjustUserLeaves(AdminLeaveAdjustRequestDto leaveAdjustRequestDto);

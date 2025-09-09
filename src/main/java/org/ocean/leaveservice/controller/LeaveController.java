@@ -5,7 +5,7 @@ import org.ocean.leaveservice.dto.UserLeaveRequestDto;
 import org.ocean.leaveservice.responses.ApiResponse;
 import org.ocean.leaveservice.responses.UserLeaveApplyResponseDto;
 import org.ocean.leaveservice.responses.UserLeaveBalancesResponseDto;
-import org.ocean.leaveservice.service.UserLeaveBalanceService;
+import org.ocean.leaveservice.service.UserLeaveService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -19,11 +19,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LeaveController {
 
-    private final UserLeaveBalanceService userLeaveBalanceService;
+    private final UserLeaveService userLeaveService;
     @PostMapping("/apply")
     public ResponseEntity<ApiResponse<UserLeaveApplyResponseDto>> applyLeave(@RequestBody @Validated UserLeaveRequestDto leaveRequest) {
 
-        UserLeaveApplyResponseDto userLeaveApplyResponse = userLeaveBalanceService.applyLeave(leaveRequest);
+        UserLeaveApplyResponseDto userLeaveApplyResponse = userLeaveService.applyLeave(leaveRequest);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(
@@ -46,7 +46,7 @@ public class LeaveController {
                                 .message("success")
                                 .statusCode(HttpStatus.OK.value())
                                 .timestamp(LocalDateTime.now())
-                                .data(userLeaveBalanceService.getMyLeaveBalances())
+                                .data(userLeaveService.getMyLeaveBalances())
                                 .build()
                 );
     }

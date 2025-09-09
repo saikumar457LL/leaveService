@@ -6,7 +6,7 @@ import org.ocean.leaveservice.responses.UserLeaveBalancesResponseDto;
 
 import java.util.List;
 
-public interface UserLeaveBalanceService {
+public interface UserLeaveService {
     List<UserLeaveBalancesResponseDto> getMyLeaveBalances();
     UserLeaveApplyResponseDto applyLeave(UserLeaveRequestDto userLeaveRequestDto);
 }

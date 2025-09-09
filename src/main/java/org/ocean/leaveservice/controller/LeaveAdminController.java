@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.ocean.leaveservice.dto.admin.AdminLeaveAdjustRequestDto;
 import org.ocean.leaveservice.responses.AdminLeaveBalanceResponseDto;
 import org.ocean.leaveservice.responses.ApiResponse;
-import org.ocean.leaveservice.service.AdminLeaveBalanceService;
+import org.ocean.leaveservice.service.AdminLeaveService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,7 +20,7 @@ import java.util.List;
 @PreAuthorize("hasAnyRole('ADMIN','HR','SUPER')")
 public class LeaveAdminController {
 
-    private final AdminLeaveBalanceService adminLeaveBalanceService;
+    private final AdminLeaveService adminLeaveService;
 
 
     @GetMapping("/fetch_user_leaves")
@@ -32,14 +32,14 @@ public class LeaveAdminController {
                                 .message("success")
                                 .statusCode(HttpStatus.OK.value())
                                 .timestamp(LocalDateTime.now())
-                                .data(adminLeaveBalanceService.fetchUserLeaves(uuid))
+                                .data(adminLeaveService.fetchUserLeaves(uuid))
                                 .build()
                 );
     }
 
     @PostMapping("/adjust_user_leaves")
     public ResponseEntity<ApiResponse<List<AdminLeaveBalanceResponseDto>>> adjustUserLeaves(@RequestBody @Validated AdminLeaveAdjustRequestDto leaveAdjustRequestDto) {
-        List<AdminLeaveBalanceResponseDto> adjustedUserLeaves = adminLeaveBalanceService.adjustUserLeaves(leaveAdjustRequestDto);
+        List<AdminLeaveBalanceResponseDto> adjustedUserLeaves = adminLeaveService.adjustUserLeaves(leaveAdjustRequestDto);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(
