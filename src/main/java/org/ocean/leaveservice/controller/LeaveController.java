@@ -20,7 +20,6 @@ import java.util.List;
 public class LeaveController {
 
     private final UserLeaveBalanceService userLeaveBalanceService;
-
     @PostMapping("/apply")
     public ResponseEntity<ApiResponse<UserLeaveApplyResponseDto>> applyLeave(@RequestBody @Validated UserLeaveRequestDto leaveRequest) {
 

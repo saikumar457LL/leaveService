@@ -3,9 +3,12 @@ package org.ocean.leaveservice.serviceImpl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.ocean.leaveservice.clients.AuthServiceClient;
+import org.ocean.leaveservice.clients.response.UsernamesFromUuidsResponse;
 import org.ocean.leaveservice.constants.LeaveStatus;
 import org.ocean.leaveservice.dto.UserLeaveRequestDto;
 import org.ocean.leaveservice.dto.admin.AdminLeaveAdjustRequestDto;
+import org.ocean.leaveservice.dto.admin.UserDetailsRequestFromUuid;
 import org.ocean.leaveservice.entity.LeaveBalances;
 import org.ocean.leaveservice.entity.LeaveRequest;
 import org.ocean.leaveservice.entity.LeaveType;
@@ -17,11 +20,13 @@ import org.ocean.leaveservice.repository.LeaveBalancesRepository;
 import org.ocean.leaveservice.repository.LeaveRequestRepository;
 import org.ocean.leaveservice.repository.LeaveTypeRepository;
 import org.ocean.leaveservice.responses.AdminLeaveBalanceResponseDto;
+import org.ocean.leaveservice.responses.ApiResponse;
 import org.ocean.leaveservice.responses.UserLeaveApplyResponseDto;
 import org.ocean.leaveservice.responses.UserLeaveBalancesResponseDto;
 import org.ocean.leaveservice.service.AdminLeaveBalanceService;
 import org.ocean.leaveservice.service.UserLeaveBalanceService;
 import org.ocean.leaveservice.utils.DateTimeUtils;
+import org.ocean.leaveservice.utils.MailUtils;
 import org.ocean.leaveservice.utils.UserUtils;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +50,8 @@ public class LeaveBalanceServiceImpl implements UserLeaveBalanceService , AdminL
     private final UserLeaveResponseMapper userLeaveResponseMapper;
     private final LeaveTypeRepository leaveTypeRepository;
     private final AdminLeaveBalanceMapper adminLeaveBalanceMapper;
+    private final AuthServiceClient authServiceClient;
+    private final MailUtils mailUtils;
 
 
     // ADMIN ACTIONS
@@ -132,6 +139,28 @@ public class LeaveBalanceServiceImpl implements UserLeaveBalanceService , AdminL
         byUserAndLeaveTypeCode.setUsedLeaves(plus(byUserAndLeaveTypeCode.getUsedLeaves(), (int)numberOfLeaveDays));
 
         leaveBalancesRepository.save(byUserAndLeaveTypeCode);
+
+        ApiResponse<List<UsernamesFromUuidsResponse>> userDetailsApiResponse = authServiceClient.getUserNamesFromUuids(
+                UserDetailsRequestFromUuid.builder()
+                        .uuids(List.of(leaveRequest.getApprover(), userUtils.getUserId()))
+                        .build()
+        );
+
+        Map<String, String> userEmails = userDetailsApiResponse.getData()
+                .stream()
+                .collect(Collectors.toMap(
+                        UsernamesFromUuidsResponse::getUuid,
+                        UsernamesFromUuidsResponse::getEmail,
+                        (value1, value2) -> value1
+                ));
+
+        mailUtils.sendMail(
+                        userEmails.get(userUtils.getUserId()),
+                        userEmails.get(leaveRequest.getApprover()),
+                        "Leave Request",
+                        "Type of Leave: " + leaveRequest.getLeaveType() +"\n" +
+                                leaveRequest.getReason()
+                );
 
         return userLeaveResponseMapper.toDto(savedLeave);
     }
