@@ -2,8 +2,10 @@ package org.ocean.leaveservice.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.ocean.leaveservice.dto.admin.AdminLeaveAdjustRequestDto;
+import org.ocean.leaveservice.dto.admin.LeaveStatusChangeRequest;
 import org.ocean.leaveservice.responses.AdminLeaveBalanceResponseDto;
 import org.ocean.leaveservice.responses.ApiResponse;
+import org.ocean.leaveservice.responses.LeaveStatus;
 import org.ocean.leaveservice.service.AdminLeaveService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,7 +56,7 @@ public class LeaveAdminController {
                 );
     }
 
-    @GetMapping
+    @GetMapping("/fetch_pending_leaves")
     public ResponseEntity<ApiResponse<Void>> getPendingLeaves() {
 
         return ResponseEntity.status(HttpStatus.OK)
@@ -65,6 +67,23 @@ public class LeaveAdminController {
                                 .message("successfully fetched pending leaves")
                                 .success(true)
                                 .build()
+                );
+    }
+
+    @PostMapping("/change_leave_status")
+    public ResponseEntity<ApiResponse<LeaveStatus>> modifyLeaveStatus(@RequestBody LeaveStatusChangeRequest leaveStatusChangeRequest) {
+
+        LeaveStatus modifiedLeaveStatus = adminLeaveService.approveOrReject(leaveStatusChangeRequest);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(
+                  ApiResponse.<LeaveStatus>builder()
+                          .success(true)
+                          .statusCode(HttpStatus.OK.value())
+                          .timestamp(LocalDateTime.now())
+                          .message("leave status successfully modified")
+                          .data(modifiedLeaveStatus)
+                          .build()
                 );
     }
 }

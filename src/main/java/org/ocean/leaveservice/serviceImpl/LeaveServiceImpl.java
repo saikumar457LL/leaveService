@@ -8,6 +8,7 @@ import org.ocean.leaveservice.clients.response.UsernamesFromUuidsResponse;
 import org.ocean.leaveservice.constants.LeaveStatus;
 import org.ocean.leaveservice.dto.UserLeaveRequestDto;
 import org.ocean.leaveservice.dto.admin.AdminLeaveAdjustRequestDto;
+import org.ocean.leaveservice.dto.admin.LeaveStatusChangeRequest;
 import org.ocean.leaveservice.dto.admin.UserDetailsRequestFromUuid;
 import org.ocean.leaveservice.entity.LeaveBalances;
 import org.ocean.leaveservice.entity.LeaveRequest;
@@ -20,10 +21,7 @@ import org.ocean.leaveservice.mappers.admin.AdminLeaveBalanceMapper;
 import org.ocean.leaveservice.repository.LeaveBalancesRepository;
 import org.ocean.leaveservice.repository.LeaveRequestRepository;
 import org.ocean.leaveservice.repository.LeaveTypeRepository;
-import org.ocean.leaveservice.responses.AdminLeaveBalanceResponseDto;
-import org.ocean.leaveservice.responses.ApiResponse;
-import org.ocean.leaveservice.responses.UserLeaveApplyResponseDto;
-import org.ocean.leaveservice.responses.UserLeaveBalancesResponseDto;
+import org.ocean.leaveservice.responses.*;
 import org.ocean.leaveservice.service.AdminLeaveService;
 import org.ocean.leaveservice.service.UserLeaveService;
 import org.ocean.leaveservice.utils.DateTimeUtils;
@@ -58,6 +56,61 @@ public class LeaveServiceImpl implements UserLeaveService, AdminLeaveService {
 
 
     // ADMIN ACTIONS
+
+
+    @Transactional
+    @Override
+    public org.ocean.leaveservice.responses.LeaveStatus approveOrReject(LeaveStatusChangeRequest leaveStatusChangeRequest) {
+
+        LeaveStatus leaveStatus = null;
+        try {
+            leaveStatus = LeaveStatus.valueOf(leaveStatusChangeRequest.getLeaveStatus());
+        } catch (IllegalArgumentException e) {
+            log.error(e.getMessage());
+            throw new LeaveException("Given leave status not found","Please contact support");
+        }
+
+        if(leaveStatus.equals(LeaveStatus.PENDING) || leaveStatus.equals(LeaveStatus.CANCELED)) {
+            throw new LeaveException("Illegal Leave Status Change","You can only reject/approve the leaves");
+        }
+
+        UUID actingUser = UUID.fromString(userUtils.getUserId());
+        UUID leaveId = UUID.fromString(leaveStatusChangeRequest.getLeaveId());
+
+        LeaveRequest requestedLeave = leaveRequestRepository.findByApproverAndUuid(actingUser, leaveId).orElseThrow(() -> new LeaveException("Leave not found", "May be you are not the approver for this leave"));
+        requestedLeave.setStatus(leaveStatus);
+
+        UUID requestedUserUuid = requestedLeave.getUser();
+
+        LeaveBalances requestedUserLeaveBalanceState = leaveBalancesRepository.findByUserAndLeaveType_Code(requestedUserUuid, requestedLeave.getLeaveType().getCode());
+
+        if(leaveStatus.equals(LeaveStatus.REJECTED)) {
+            requestedUserLeaveBalanceState.setAvailableLeaves(requestedUserLeaveBalanceState.getAvailableLeaves() + 1);
+            requestedUserLeaveBalanceState.setUsedLeaves(requestedUserLeaveBalanceState.getUsedLeaves() - 1);
+        }
+
+        LeaveRequest modifiedLeaveStatus = leaveRequestRepository.save(requestedLeave);
+        leaveBalancesRepository.save(requestedUserLeaveBalanceState);
+
+        ApiResponse<List<UsernamesFromUuidsResponse>> userDetailsResponse = authServiceClient.getUserNamesFromUuids(
+                UserDetailsRequestFromUuid.builder()
+                        .uuids(List.of(actingUser.toString(), requestedUserUuid.toString()))
+                        .build()
+        );
+
+        Map<String, UsernamesFromUuidsResponse> extractedUserDetails = userDetailsResponse.getData().stream()
+                .map(userResponse -> new AbstractMap.SimpleEntry<>(userResponse.getUuid(), userResponse))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+        mailUtils.sendMail(
+                extractedUserDetails.get(actingUser.toString()).getEmail(),
+                extractedUserDetails.get(requestedUserUuid.toString()).getEmail(),
+                "Your Leave Status Changed: "+leaveStatus.toString(),
+                "Your recent leave is " + leaveStatus.toString()
+        );
+
+        return leaveStatusMapper.toDto(modifiedLeaveStatus);
+    }
 
     @Override
     public List<AdminLeaveBalanceResponseDto> fetchUserLeaves(String uuid) {

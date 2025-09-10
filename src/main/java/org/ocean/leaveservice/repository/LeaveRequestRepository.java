@@ -12,7 +12,7 @@ import java.util.UUID;
 @Repository
 public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Integer> {
     List<LeaveRequest> findAllByUserAndStatus(UUID user, LeaveStatus status);
-    List<LeaveRequest> findAllByApproverAndStatus(UUID user, LeaveStatus status);
+    Optional<LeaveRequest> findByApproverAndUuid(UUID approver, UUID leaveId);
     List<LeaveRequest> findAllByApprover(UUID approver);
     List<LeaveRequest> findAllByUser(UUID user);
     Optional<LeaveRequest> findByUserAndUuid(UUID user, UUID uuid);
