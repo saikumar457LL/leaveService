@@ -24,6 +24,9 @@ public class LeaveRequest {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(name = "uuid")
+    private UUID uuid;
+
     @Column(name = "user_id",nullable = false)
     private UUID user;
 

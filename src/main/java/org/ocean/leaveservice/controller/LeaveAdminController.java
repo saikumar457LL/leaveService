@@ -53,4 +53,18 @@ public class LeaveAdminController {
                                 .build()
                 );
     }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<Void>> getPendingLeaves() {
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(
+                        ApiResponse.<Void>builder()
+                                .statusCode(HttpStatus.OK.value())
+                                .timestamp(LocalDateTime.now())
+                                .message("successfully fetched pending leaves")
+                                .success(true)
+                                .build()
+                );
+    }
 }

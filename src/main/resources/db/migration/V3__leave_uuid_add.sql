@@ -1,0 +1,1 @@
+alter table leave.leave_requests add column uuid uuid not null default gen_random_uuid();

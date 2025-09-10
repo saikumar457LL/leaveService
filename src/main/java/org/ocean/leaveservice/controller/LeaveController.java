@@ -3,6 +3,7 @@ package org.ocean.leaveservice.controller;
 import lombok.RequiredArgsConstructor;
 import org.ocean.leaveservice.dto.UserLeaveRequestDto;
 import org.ocean.leaveservice.responses.ApiResponse;
+import org.ocean.leaveservice.responses.LeaveStatus;
 import org.ocean.leaveservice.responses.UserLeaveApplyResponseDto;
 import org.ocean.leaveservice.responses.UserLeaveBalancesResponseDto;
 import org.ocean.leaveservice.service.UserLeaveService;
@@ -37,7 +38,7 @@ public class LeaveController {
                 );
     }
 
-    @GetMapping
+    @GetMapping("/balances")
     public ResponseEntity<ApiResponse<List<UserLeaveBalancesResponseDto>>> fetchAllMyLeaves() {
         return ResponseEntity.status(HttpStatus.OK)
                 .body(
@@ -47,6 +48,37 @@ public class LeaveController {
                                 .statusCode(HttpStatus.OK.value())
                                 .timestamp(LocalDateTime.now())
                                 .data(userLeaveService.getMyLeaveBalances())
+                                .build()
+                );
+    }
+
+    @GetMapping("/applied_status")
+    public ResponseEntity<ApiResponse<List<LeaveStatus>>> fetchAppliedLeaves() {
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(
+                        ApiResponse.<List<LeaveStatus>>builder()
+                                .success(true)
+                                .message("Pending leaves")
+                                .statusCode(HttpStatus.OK.value())
+                                .data(userLeaveService.fetchAllLeaveStatus())
+                                .timestamp(LocalDateTime.now())
+                                .build()
+                );
+    }
+
+    @PatchMapping("/cancel")
+    public ResponseEntity<ApiResponse<Void>> cancelLeave(@RequestParam String leaveId) {
+
+        userLeaveService.cancelLeave(leaveId);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(
+                        ApiResponse.<Void>builder()
+                                .statusCode(HttpStatus.OK.value())
+                                .timestamp(LocalDateTime.now())
+                                .success(true)
+                                .message("Leave Cancelled Successfully")
                                 .build()
                 );
     }

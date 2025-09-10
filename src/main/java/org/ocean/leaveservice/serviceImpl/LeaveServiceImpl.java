@@ -13,6 +13,7 @@ import org.ocean.leaveservice.entity.LeaveBalances;
 import org.ocean.leaveservice.entity.LeaveRequest;
 import org.ocean.leaveservice.entity.LeaveType;
 import org.ocean.leaveservice.exceptions.LeaveException;
+import org.ocean.leaveservice.mappers.LeaveStatusMapper;
 import org.ocean.leaveservice.mappers.UserLeaveBalanceMapper;
 import org.ocean.leaveservice.mappers.UserLeaveResponseMapper;
 import org.ocean.leaveservice.mappers.admin.AdminLeaveBalanceMapper;
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,6 +54,7 @@ public class LeaveServiceImpl implements UserLeaveService, AdminLeaveService {
     private final AdminLeaveBalanceMapper adminLeaveBalanceMapper;
     private final AuthServiceClient authServiceClient;
     private final MailUtils mailUtils;
+    private final LeaveStatusMapper leaveStatusMapper;
 
 
     // ADMIN ACTIONS
@@ -73,6 +76,70 @@ public class LeaveServiceImpl implements UserLeaveService, AdminLeaveService {
     }
 
     // USER ACTIONS
+
+
+    @Transactional
+    @Override
+    public void cancelLeave(String leaveUuid) {
+        String userId = userUtils.getUserId();
+
+        UUID userUuid = UUID.fromString(userId);
+        UUID leaveId = UUID.fromString(leaveUuid);
+
+        LeaveRequest userAppliedLeave = leaveRequestRepository.findByUserAndUuid(userUuid, leaveId).orElseThrow(() -> new LeaveException("Leave not found", "Requested Leave not found"));
+
+        if(userAppliedLeave.getStatus().equals(LeaveStatus.APPROVED)){
+            throw new LeaveException("Leave Already approved", "Leave Already approved\nFor Cancelling contact you HR/Manager");
+        }
+
+        userAppliedLeave.setStatus(LeaveStatus.CANCELED);
+        leaveRequestRepository.save(userAppliedLeave);
+
+        LeaveBalances leaveBalanceAdjust = leaveBalancesRepository.findByUserAndLeaveType_Code(userUuid, userAppliedLeave.getLeaveType().getCode());
+        leaveBalanceAdjust.setUsedLeaves(leaveBalanceAdjust.getUsedLeaves() - 1);
+        leaveBalanceAdjust.setAvailableLeaves(leaveBalanceAdjust.getAvailableLeaves() + 1);
+
+        leaveBalancesRepository.save(leaveBalanceAdjust);
+
+        String approverUuid = userAppliedLeave.getApprover().toString();
+
+        ApiResponse<List<UsernamesFromUuidsResponse>> userEmailDetails = authServiceClient.getUserNamesFromUuids(
+                UserDetailsRequestFromUuid.builder()
+                        .uuids(List.of(userId, approverUuid))
+                        .build()
+        );
+
+        Map<String, UsernamesFromUuidsResponse> formattedUserDetails = userEmailDetails.getData().stream()
+                .map(userResponse -> new AbstractMap.SimpleEntry<>(userResponse.getUuid(), userResponse))
+                .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+
+        UsernamesFromUuidsResponse loggedInUserDetails = formattedUserDetails.get(userId);
+        UsernamesFromUuidsResponse approverUserDetails = formattedUserDetails.get(approverUuid);
+
+        mailUtils.sendMail(
+                loggedInUserDetails.getEmail(),approverUserDetails.getEmail(),
+                loggedInUserDetails.getUsername()+" Canceled the Leave",
+                "Type of Leave: " + getLeaveType(userAppliedLeave.getLeaveType().getCode())
+                + "\nLeave Reason: " + userAppliedLeave.getReason()
+        );
+    }
+
+    private String getLeaveType(String code) {
+        return switch (code) {
+          case "EL" -> "EARNED";
+          case "CML" -> "CAMP-OFF";
+          case "ML" -> "MATERNITY LEAVE";
+          case "SL" -> "SICK LEAVE";
+          default -> "CASUAL";
+        };
+    }
+
+    @Override
+    public List<org.ocean.leaveservice.responses.LeaveStatus> fetchAllLeaveStatus() {
+        UUID userUuid = UUID.fromString(userUtils.getUserId());
+        List<LeaveRequest> userPendingLeaves = leaveRequestRepository.findAllByUser(userUuid);
+        return userPendingLeaves.stream().map(leaveStatusMapper::toDto).toList();
+    }
 
     @Override
     public List<UserLeaveBalancesResponseDto> getMyLeaveBalances() {
@@ -131,6 +198,7 @@ public class LeaveServiceImpl implements UserLeaveService, AdminLeaveService {
         markedForLeave.setStatus(LeaveStatus.PENDING);
         markedForLeave.setReason(leaveRequest.getReason());
         markedForLeave.setApprover(UUID.fromString(leaveRequest.getApprover()));
+        markedForLeave.setUuid(UUID.randomUUID());
 
         LeaveRequest savedLeave = leaveRequestRepository.save(markedForLeave);
 
@@ -155,11 +223,11 @@ public class LeaveServiceImpl implements UserLeaveService, AdminLeaveService {
                 ));
 
         mailUtils.sendMail(
-                        userEmails.get(userUtils.getUserId()),
+                        "leave_apply@ocean.com",
                         userEmails.get(leaveRequest.getApprover()),
-                        "Leave Request",
-                        "Type of Leave: " + leaveRequest.getLeaveType() +"\n" +
-                                leaveRequest.getReason()
+                        "Leave Request For "+userUtils.getUserName(),
+                        "Type of Leave: " + getLeaveType(leaveRequest.getLeaveType()) +"\n" +
+                                "Leave Reason: "+leaveRequest.getReason()
                 );
 
         return userLeaveResponseMapper.toDto(savedLeave);
