@@ -88,8 +88,8 @@ public class LeaveServiceImpl implements UserLeaveService, AdminLeaveService {
 
         LeaveRequest userAppliedLeave = leaveRequestRepository.findByUserAndUuid(userUuid, leaveId).orElseThrow(() -> new LeaveException("Leave not found", "Requested Leave not found"));
 
-        if(userAppliedLeave.getStatus().equals(LeaveStatus.APPROVED)){
-            throw new LeaveException("Leave Already approved", "Leave Already approved\nFor Cancelling contact you HR/Manager");
+        if(userAppliedLeave.getStatus().equals(LeaveStatus.APPROVED) || userAppliedLeave.getStatus().equals(LeaveStatus.REJECTED)) {
+            throw new LeaveException("Unable to cancel the leave", "Leave Already approved/rejected\nFor Cancelling contact you HR/Manager");
         }
 
         userAppliedLeave.setStatus(LeaveStatus.CANCELED);
