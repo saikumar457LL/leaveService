@@ -124,15 +124,6 @@ public class LeaveServiceImpl implements UserLeaveService, AdminLeaveService {
         );
     }
 
-    private String getLeaveType(String code) {
-        return switch (code) {
-          case "EL" -> "EARNED";
-          case "CML" -> "CAMP-OFF";
-          case "ML" -> "MATERNITY LEAVE";
-          case "SL" -> "SICK LEAVE";
-          default -> "CASUAL";
-        };
-    }
 
     @Override
     public List<org.ocean.leaveservice.responses.LeaveStatus> fetchAllLeaveStatus() {
@@ -146,6 +137,14 @@ public class LeaveServiceImpl implements UserLeaveService, AdminLeaveService {
         String userId = userUtils.getUserId();
         return leaveBalancesRepository.findAllByUser(UUID.fromString(userId)).stream()
                 .map(userLeaveBalanceMapper::toDto).toList();
+    }
+
+    @Override
+    public org.ocean.leaveservice.responses.LeaveStatus getLeaveStatus(String leaveId) {
+        UUID userId = UUID.fromString(userUtils.getUserId());
+        UUID leave = UUID.fromString(leaveId);
+        LeaveRequest appliedLeave = leaveRequestRepository.findByUserAndUuid(userId, leave).orElseThrow(() -> new LeaveException("Leave not found", "Leave not found"));
+        return leaveStatusMapper.toDto(appliedLeave);
     }
 
     // TODO Implement half-day leave
@@ -233,11 +232,22 @@ public class LeaveServiceImpl implements UserLeaveService, AdminLeaveService {
         return userLeaveResponseMapper.toDto(savedLeave);
     }
 
+    // private methods
+
     private int plus(int a, int b) {
         return a + b;
     }
 
     private int minus(int a, int b) {
         return a - b;
+    }
+    private String getLeaveType(String code) {
+        return switch (code) {
+            case "EL" -> "EARNED";
+            case "CML" -> "CAMP-OFF";
+            case "ML" -> "MATERNITY LEAVE";
+            case "SL" -> "SICK LEAVE";
+            default -> "CASUAL";
+        };
     }
 }

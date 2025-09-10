@@ -82,4 +82,20 @@ public class LeaveController {
                                 .build()
                 );
     }
+
+    @GetMapping("/status")
+    public ResponseEntity<ApiResponse<LeaveStatus>> fetchLeaveStatus(@RequestParam String leaveId) {
+        LeaveStatus leaveStatus = userLeaveService.getLeaveStatus(leaveId);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(
+                  ApiResponse.<LeaveStatus>builder()
+                          .success(true)
+                          .message("Leave Status fetched successfully")
+                          .statusCode(HttpStatus.OK.value())
+                          .data(leaveStatus)
+                          .timestamp(LocalDateTime.now())
+                          .build()
+                );
+    }
 }

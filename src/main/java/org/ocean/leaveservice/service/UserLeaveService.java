@@ -12,4 +12,5 @@ public interface UserLeaveService {
     UserLeaveApplyResponseDto applyLeave(UserLeaveRequestDto userLeaveRequestDto);
     List<LeaveStatus> fetchAllLeaveStatus();
     void cancelLeave(String leaveId);
+    LeaveStatus getLeaveStatus(String leaveId);
 }
