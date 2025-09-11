@@ -71,13 +71,18 @@ public class LeaveServiceImpl implements UserLeaveService, AdminLeaveService {
         }
 
         if(leaveStatus.equals(LeaveStatus.PENDING) || leaveStatus.equals(LeaveStatus.CANCELED)) {
-            throw new LeaveException("Illegal Leave Status Change","You can only reject/approve the leaves");
+            throw new LeaveException("Illegal leave Status change","You can only reject/approve the leaves");
         }
 
         UUID actingUser = UUID.fromString(userUtils.getUserId());
         UUID leaveId = UUID.fromString(leaveStatusChangeRequest.getLeaveId());
 
         LeaveRequest requestedLeave = leaveRequestRepository.findByApproverAndUuid(actingUser, leaveId).orElseThrow(() -> new LeaveException("Leave not found", "May be you are not the approver for this leave"));
+
+        if(requestedLeave.getStatus().equals(LeaveStatus.APPROVED) || requestedLeave.getStatus().equals(LeaveStatus.REJECTED)) {
+            throw new LeaveException("Illegal leave status change","You can not change the leaves status which are once approved/rejected");
+        }
+
         requestedLeave.setStatus(leaveStatus);
 
         UUID requestedUserUuid = requestedLeave.getUser();
