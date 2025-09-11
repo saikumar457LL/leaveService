@@ -16,4 +16,5 @@ public interface LeaveRequestRepository extends JpaRepository<LeaveRequest, Inte
     List<LeaveRequest> findAllByApprover(UUID approver);
     List<LeaveRequest> findAllByUser(UUID user);
     Optional<LeaveRequest> findByUserAndUuid(UUID user, UUID uuid);
+    List<LeaveRequest> findAllByApproverAndStatus(UUID approver, LeaveStatus status);
 }

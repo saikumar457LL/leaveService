@@ -56,16 +56,19 @@ public class LeaveAdminController {
                 );
     }
 
-    @GetMapping("/fetch_pending_leaves")
-    public ResponseEntity<ApiResponse<Void>> getPendingLeaves() {
+    @GetMapping("/fetch_requested_leaves")
+    public ResponseEntity<ApiResponse<List<LeaveStatus>>> fetchRequestedLeaves(@RequestParam(required = false) String leaveStatus) {
+
+        List<LeaveStatus> requestedLeaves = adminLeaveService.fetchAllAppliedLeaves(leaveStatus);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(
-                        ApiResponse.<Void>builder()
+                        ApiResponse.<List<LeaveStatus>>builder()
                                 .statusCode(HttpStatus.OK.value())
                                 .timestamp(LocalDateTime.now())
-                                .message("successfully fetched pending leaves")
+                                .message("successfully fetched user requested leaves")
                                 .success(true)
+                                .data(requestedLeaves)
                                 .build()
                 );
     }

@@ -31,10 +31,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,16 +55,48 @@ public class LeaveServiceImpl implements UserLeaveService, AdminLeaveService {
     // ADMIN ACTIONS
 
 
+    @Override
+    public List<org.ocean.leaveservice.responses.LeaveStatus> fetchAllAppliedLeaves(String leaveStatus) {
+
+        LeaveStatus defaultLeaveState;
+
+        try {
+            if(null == leaveStatus){
+                log.info("No leaveStatus provided, defaulting to PENDING");
+                defaultLeaveState = LeaveStatus.PENDING;
+            }
+            else{
+                log.info("Fetching leaves with status {}", leaveStatus);
+                defaultLeaveState = LeaveStatus.valueOf(leaveStatus);
+            }
+        } catch (IllegalArgumentException e) {
+            log.error(e.getMessage());
+            throw new LeaveException(
+                    "Leave Status not found",
+                    "Invalid leave status: " + leaveStatus + ". Allowed values: " + Arrays.toString(LeaveStatus.values())
+            );
+        }
+
+        UUID actingUser = UUID.fromString(userUtils.getUserId());
+
+        List<LeaveRequest> allByApproverAndStatus = leaveRequestRepository.findAllByApproverAndStatus(actingUser, defaultLeaveState);
+
+        return allByApproverAndStatus.stream().map(leaveStatusMapper::toDto).toList();
+    }
+
     @Transactional
     @Override
     public org.ocean.leaveservice.responses.LeaveStatus approveOrReject(LeaveStatusChangeRequest leaveStatusChangeRequest) {
 
-        LeaveStatus leaveStatus = null;
+        LeaveStatus leaveStatus;
         try {
             leaveStatus = LeaveStatus.valueOf(leaveStatusChangeRequest.getLeaveStatus());
         } catch (IllegalArgumentException e) {
             log.error(e.getMessage());
-            throw new LeaveException("Given leave status not found","Please contact support");
+            throw new LeaveException(
+                    "Leave Status not found",
+                    "Invalid leave status: " + leaveStatusChangeRequest.getLeaveStatus() + ". Allowed values: " + Arrays.toString(LeaveStatus.values())
+            );
         }
 
         if(leaveStatus.equals(LeaveStatus.PENDING) || leaveStatus.equals(LeaveStatus.CANCELED)) {
@@ -117,6 +146,7 @@ public class LeaveServiceImpl implements UserLeaveService, AdminLeaveService {
         return leaveStatusMapper.toDto(modifiedLeaveStatus);
     }
 
+    // TODO is this correct method, may be remove
     @Override
     public List<AdminLeaveBalanceResponseDto> fetchUserLeaves(String uuid) {
         UUID userUuid = UUID.fromString(uuid);
